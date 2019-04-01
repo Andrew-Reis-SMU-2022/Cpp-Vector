@@ -3,18 +3,22 @@
 #include <ctime>
 #include <iostream>
 #include <initializer_list>
+#include <stdlib.h>
+#include "Card.h"
 
 template class vector<int>;
 template class vector<double>;
+template class vector<char>;
+template class vector<Card>;
 
 
-template<class T> T &memcpy(T arr[], int lenght) {
+template<class T> T* memcpy(T arr[], int length) {
 	T *new_arr;
-	new_arr = new T[lenght];
-	for (int i = 0; i < lenght; i++) {
+	new_arr = new T[length];
+	for (int i = 0; i < length; i++) {
 		new_arr[i] = arr[i];
 	}
-	return *new_arr;
+	return new_arr;
 }
 
 
@@ -24,17 +28,18 @@ template<class T> vector<T>::vector()
 	this->list = new T[this->num_of_elems];
 }
 
-template<class T> vector<T>::vector(vector &vector) {
+template<class T> vector<T>::vector(const vector &vector) {
 	this->num_of_elems = vector.num_of_elems;
-	this->list = &memcpy<T>(vector.list, vector.num_of_elems);
+	this->list = memcpy<T>(vector.list, vector.num_of_elems);
 }
 
 template<class T> vector<T>::vector(T arr[], int length) {
 	this->num_of_elems = length;
-	this->list = &memcpy<T>(arr, length);
+	this->list = memcpy<T>(arr, length);
 }
 
-template<class T> vector<T>::vector(std::initializer_list<T> iList) {
+// Not allowed to use std::initializer_list for this assignment
+/*template<class T> vector<T>::vector(std::initializer_list<T> iList) {
 	this->num_of_elems = iList.size();
 	this->list = new T[this->num_of_elems];
 	int i = 0;
@@ -42,11 +47,14 @@ template<class T> vector<T>::vector(std::initializer_list<T> iList) {
 		this->list[i] = elem;
 		i++;
 	}
-}
+}*/
 
 template<class T> vector<T>& vector<T>::operator=(const vector &vector) {
-	this->num_of_elems = vector.num_of_elems;
-	this->list = &memcpy<T>(vector.list, vector.num_of_elems);
+	if (this != &vector) {
+		this->num_of_elems = vector.num_of_elems;
+		delete[] this->list;
+		this->list = memcpy<T>(vector.list, vector.num_of_elems);
+	}
 	return *this;
 }
 
@@ -54,7 +62,7 @@ template<class T> T vector<T>::operator[](int index) {
 	return this->at(index);
 }
 
-template <class T> void vector<T>::append(vector vector_to_append) {
+template <class T> void vector<T>::append(vector &vector_to_append) {
 	T *temp;
 	temp = this->list;
 	int temp_size = this->num_of_elems;
@@ -104,8 +112,10 @@ template <class T> T vector<T>::at(int index) {
 	else if (index < 0 && index * -1 <= this->num_of_elems) {
 		return this->list[this->num_of_elems + index];
 	}
-	else {
-		return NULL;
+	else { //best way to handle this due to the restrictions of the assignment... don't have access to std::exception
+		std::cout << "Index Out Of Bounds Exception!!!\n";
+		std::cout << "Returning the first elem in the vector\n";
+		return this->list[0];
 	}
 }
 
@@ -135,6 +145,46 @@ template <class T> void vector<T>::del(int index) {
 	delete[] temp;
 }
 
+template <class T> int vector<T>::find(T elem) {
+	for (int i = 0; i < this->num_of_elems; i++) {
+		if (this->list[i] == elem) {
+			return i;
+		}
+	}
+	return -99999; //elem doesn't exist in vector, best way to handle it given assignment restrictions
+}
+
+template <class T> void vector<T>::insert(int index, T elem) {
+	T *temp;
+	temp = this->list;
+	int temp_size = this->num_of_elems;
+	this->num_of_elems++;
+	this->list = new T[this->num_of_elems];
+	int j = 0; //temp incrementor
+	for (int i = 0; i < this->num_of_elems; i++) {
+		if (i != index) {
+			this->list[i] = temp[j];
+			j++;
+		}
+		else {
+			this->list[i] = elem;
+		}
+	}
+}
+
+template <class T> void vector<T>::replace(int starting_index, int ending_index, T arr[], int length) {
+	for (int i = starting_index; i <= ending_index; i++) {
+		this->del(starting_index);
+	}
+	for (int i = 0; i < length; i++) {
+		this->insert(starting_index + i, arr[i]);
+	}
+}
+
+template <class T> void vector<T>::replace(int starting_index, int ending_index, vector<T> vec) {
+	this->replace(starting_index, ending_index, vec.list, vec.num_of_elems);
+}
+
 bool index_taken(int index, int arr[], int length) {
 	for (int i = 0; i < length; i++) {
 		if (arr[i] == index) {
@@ -145,23 +195,22 @@ bool index_taken(int index, int arr[], int length) {
 }
 
 template <class T> void vector<T>::shuffle() {
-	std::mt19937 gen(time(NULL));
-	std::uniform_int_distribution<int> dis(0, this->num_of_elems - 1);
+	srand(time(NULL));
 	T *temp;
 	temp = this->list;
 	this->list = new T[this->num_of_elems];
 	int *new_locations;
 	new_locations = new int[this->num_of_elems];
-	new_locations[0] = dis(gen);
+	new_locations[0] = rand() % this->num_of_elems;
 	for (int i = 1; i < this->num_of_elems; i++) {
-		int new_index = dis(gen);
+		int new_index = rand() % this->num_of_elems;
 		while (true) {
 			if (!index_taken(new_index, new_locations, i)) {
 				new_locations[i] = new_index;
 				break;
 			}
 			else {
-				new_index = dis(gen);
+				new_index = rand() % this->num_of_elems;
 			}
 		}
 	}
@@ -173,6 +222,16 @@ template <class T> void vector<T>::shuffle() {
 
 template <class T> int vector<T>::size() {
 	return this->num_of_elems;
+}
+
+template<class T> T* vector<T>::getList() {
+	return this->list;
+}
+
+template<class T> void vector<T>::empty() {
+	delete[] this->list;
+	this->num_of_elems = 0;
+	this->list = new T[this->num_of_elems];
 }
 
 template <class T> void vector<T>::credit() {
