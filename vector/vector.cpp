@@ -4,12 +4,11 @@
 #include <iostream>
 #include <initializer_list>
 #include <stdlib.h>
-#include "Card.h"
+#include <exception>
 
 template class vector<int>;
 template class vector<double>;
 template class vector<char>;
-template class vector<Card>;
 
 
 template<class T> T* memcpy(T arr[], int length) {
@@ -38,8 +37,7 @@ template<class T> vector<T>::vector(T arr[], int length) {
 	this->list = memcpy<T>(arr, length);
 }
 
-// Not allowed to use std::initializer_list for this assignment
-/*template<class T> vector<T>::vector(std::initializer_list<T> iList) {
+template<class T> vector<T>::vector(std::initializer_list<T> iList) {
 	this->num_of_elems = iList.size();
 	this->list = new T[this->num_of_elems];
 	int i = 0;
@@ -47,7 +45,7 @@ template<class T> vector<T>::vector(T arr[], int length) {
 		this->list[i] = elem;
 		i++;
 	}
-}*/
+}
 
 template<class T> vector<T>& vector<T>::operator=(const vector &vector) {
 	if (this != &vector) {
@@ -112,10 +110,9 @@ template <class T> T vector<T>::at(int index) {
 	else if (index < 0 && index * -1 <= this->num_of_elems) {
 		return this->list[this->num_of_elems + index];
 	}
-	else { //best way to handle this due to the restrictions of the assignment... don't have access to std::exception
+	else {
 		std::cout << "Index Out Of Bounds Exception!!!\n";
-		std::cout << "Returning the first elem in the vector\n";
-		return this->list[0];
+		std::terminate();
 	}
 }
 
@@ -151,7 +148,7 @@ template <class T> int vector<T>::find(T elem) {
 			return i;
 		}
 	}
-	return -99999; //elem doesn't exist in vector, best way to handle it given assignment restrictions
+	return -1; //index is not found
 }
 
 template <class T> void vector<T>::insert(int index, T elem) {
@@ -195,22 +192,23 @@ bool index_taken(int index, int arr[], int length) {
 }
 
 template <class T> void vector<T>::shuffle() {
-	srand(time(NULL));
+	std::mt19937 gen(time(NULL));
+	std::uniform_int_distribution<int> dis(0, this->num_of_elems - 1);
 	T *temp;
 	temp = this->list;
 	this->list = new T[this->num_of_elems];
 	int *new_locations;
 	new_locations = new int[this->num_of_elems];
-	new_locations[0] = rand() % this->num_of_elems;
+	new_locations[0] = dis(gen);
 	for (int i = 1; i < this->num_of_elems; i++) {
-		int new_index = rand() % this->num_of_elems;
+		int new_index = dis(gen);
 		while (true) {
 			if (!index_taken(new_index, new_locations, i)) {
 				new_locations[i] = new_index;
 				break;
 			}
 			else {
-				new_index = rand() % this->num_of_elems;
+				new_index = dis(gen);
 			}
 		}
 	}

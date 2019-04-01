@@ -10,7 +10,7 @@ public:
 	vector();
 	vector(const vector &vector);
 	vector(T arr[], int length);
-	//vector(std::initializer_list<T> iList);
+	vector(std::initializer_list<T> iList);
 	vector& operator=(const vector &vector);
 	T operator[](int index);
 	void append(vector &vector_to_append);
