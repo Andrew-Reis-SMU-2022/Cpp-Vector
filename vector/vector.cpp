@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <exception>
 
+//Add template type declarations here
 template class vector<int>;
 template class vector<double>;
 template class vector<char>;
